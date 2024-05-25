@@ -33,4 +33,8 @@
 
 # SPIN
 pan.*
-run.tmp
+*.tmp
+*.trail
+
+# Compressed
+*.zip

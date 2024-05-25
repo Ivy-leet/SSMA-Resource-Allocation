@@ -1,4 +1,4 @@
-/* Version 0.1 */
+/* Version 0.1.1 */
 
 /* Channels */
 chan A1Env = [0] of {int};
@@ -10,13 +10,14 @@ chan EnvA2 = [0] of {int};
 int r1 = 0;
 int r2 = 0;
 int r3 = 0;
+int r4 = 0;
 
 /* Demand */
 int d1 = 2;
 int d2 = 2;
 
 
-proctype Env() {
+active proctype Env() {
 	int action_1 = 0;
 	int action_2 = 0;
 	
@@ -35,6 +36,7 @@ proctype Env() {
 					:: (action_1 % 10 == 1 && r1 == 0) -> r1 = 1; d1 = d1 - 1;
 					:: (action_1 % 10 == 2 && r2 == 0) -> r2 = 1; d1 = d1 - 1;
 					:: (action_1 % 10 == 3 && r3 == 0) -> r3 = 1; d1 = d1 - 1;
+					:: (action_1 % 10 == 4 && r4 == 0) -> r4 = 1; d1 = d1 - 1;
 					:: else -> skip;
 					fi
 				:: else -> skip;
@@ -46,6 +48,7 @@ proctype Env() {
 					:: (action_2 % 10 == 1 && r1 == 0) -> r1 = 2; d2 = d2 -1;
 					:: (action_2 % 10 == 2 && r2 == 0) -> r2 = 2; d2 = d2 -1;
 					:: (action_2 % 10 == 3 && r3 == 0) -> r3 = 2; d2 = d2 -1;
+					:: (action_2 % 10 == 4 && r4 == 0) -> r4 = 2; d2 = d2 -1;
 					:: else -> skip;
 					fi
 				:: else -> skip;
@@ -62,11 +65,25 @@ proctype Env() {
 			:: (action_1 % 10 == 1) -> r1 = 0; d1 = d1 + 1;
 			:: (action_1 % 10 == 2) -> r2 = 0; d1 = d1 + 1;
 			:: (action_1 % 10 == 3) -> r3 = 0; d1 = d1 + 1;
+			:: (action_1 % 10 == 4) -> r4 = 0; d1 = d1 + 1;
 			:: (action_1 % 10 == 0) -> /* release all */
 				if 
 				:: (r1 == 1) -> r1 = 0;
+				:: else -> skip;
+				fi
+				
+				if 
 				:: (r2 == 1) -> r2 = 0;
+				:: else -> skip;
+				fi
+				
+				if 
 				:: (r3 == 1) -> r3 = 0;
+				:: else -> skip;
+				fi
+				
+				if 
+				:: (r4 == 1) -> r4 = 0;
 				:: else -> skip;
 				fi
 				d1 = 2; 
@@ -78,8 +95,7 @@ proctype Env() {
 		if /* release resource */
 		:: (action_2 / 10 == 2) ->
 			if
-			:: (action_2 % 10 == 1) -> 
-					r1 = 0; d2 = d2 + 1;
+			:: (action_2 % 10 == 1) -> r1 = 0; d2 = d2 + 1;
 			:: (action_2 % 10 == 2) -> r2 = 0; d2 = d2 + 1;
 			:: (action_2 % 10 == 3) -> r3 = 0; d2 = d2 + 1;
 			:: (action_2 % 10 == 0) -> /* release all */
@@ -98,6 +114,11 @@ proctype Env() {
 				:: else -> skip;
 				fi
 				
+				if 
+				:: (r4 == 2) -> r4 = 0;
+				:: else -> skip;
+				fi
+				
 				d2 = 2;
 			:: else -> skip;
 			fi
@@ -111,12 +132,14 @@ proctype Env() {
 }
 
 
-proctype A1() {
+active proctype A1() {
 	int req_1 = 11;
 	int req_2 = 12;
+	int req_3 = 13;
 	
 	int rel_1 = 21;
 	int rel_2 = 22;
+	int rel_3 = 23;
 	int rel_all = 20;
 	
 	int idle = 30;
@@ -130,32 +153,42 @@ proctype A1() {
 		:: (d1 == 0) -> 
 			atomic {
 				A1Env!rel_all;
-				prinf("Agent 1 action: release all");
+				printf("Agent 1 action: release all\n");
 			}
 		:: (r1 == 0) -> 
 			atomic {
 				A1Env!req_1;
-				prinf("Agent 1 action: request resource 1");
+				printf("Agent 1 action: request resource 1\n");
 			}
 		:: (r2 == 0) -> 
 			atomic {
 				A1Env!req_2;
-				prinf("Agent 1 action: request resource 2");
+				printf("Agent 1 action: request resource 2\n");
+			}
+		:: (r3 == 0) -> 
+			atomic {
+				A1Env!req_3;
+				printf("Agent 1 action: request resource 3\n");
 			}
 		:: (r1 == 1) -> 
 			atomic {
 				A1Env!rel_1;
-				prinf("Agent 1 action: release resource 1");
+				printf("Agent 1 action: release resource 1\n");
 			}
 		:: (r2 == 1) -> 
 			atomic {
 				A1Env!rel_2;
-				prinf("Agent 1 action: release resource 2");
+				printf("Agent 1 action: release resource 2\n");
+			}
+		:: (r3 == 1) -> 
+			atomic {
+				A1Env!rel_3;
+				printf("Agent 1 action: release resource 3\n");
 			}
 		:: (d1 > 0) -> 
 			atomic {
 				A1Env!idle;
-				prinf("Agent 1 action: idle");
+				printf("Agent 1 action: idle\n");
 			}
 		fi
 		
@@ -166,12 +199,14 @@ proctype A1() {
 }
 
 
-proctype A2() {
+active proctype A2() {
 	int req_2 = 12;
 	int req_3 = 13;
+	int req_4 = 14;
 	
 	int rel_2 = 22;
 	int rel_3 = 23;
+	int rel_4 = 24;
 	int rel_all = 20;
 	
 	int idle = 30;
@@ -182,32 +217,42 @@ proctype A2() {
 		:: (d2 == 0) -> 
 			atomic {
 				A2Env!rel_all;
-				prinf("Agent 2 action: release all");
+				printf("Agent 2 action: release all\n");
 			}
 		:: (r2 == 0) -> 
 			atomic {
 				A2Env!req_2;
-				prinf("Agent 2 action: request resource 2");
+				printf("Agent 2 action: request resource 2\n");
 			}
 		:: (r3 == 0) -> 
 			atomic {
 				A2Env!req_3;
-				prinf("Agent 2 action: request resource 3");
+				printf("Agent 2 action: request resource 3\n");
 			}
-		:: (r2 == 1) -> 
+		:: (r4 == 0) -> 
+			atomic {
+				A2Env!req_4;
+				printf("Agent 2 action: request resource 4\n");
+			}
+		:: (r2 == 2) -> 
 			atomic {
 				A2Env!rel_2;
-				prinf("Agent 2 action: release resource 2");
+				printf("Agent 2 action: release resource 2\n");
 			}
-		:: (r3 == 1) -> 
+		:: (r3 == 2) -> 
 			atomic {
 				A2Env!rel_3;
-				prinf("Agent 2 action: release resource 3");
+				printf("Agent 2 action: release resource 3\n");
+			}
+		:: (r4 == 2) -> 
+			atomic {
+				A2Env!rel_4;
+				printf("Agent 2 action: release resource 4\n");
 			}
 		:: (d2 > 0) -> 
 			atomic {
 				A2Env!idle;
-				prinf("Agent 2 action: idle");
+				printf("Agent 2 action: idle\n");
 			}
 		fi
 		
@@ -217,8 +262,5 @@ proctype A2() {
 	goto Loop;
 }
 
-init {
-	run Env();
-	run A1();
-	run A2();
-}
+
+ltl live { (<>[] d1 > 0) || (<>[] d2 > 0) }
