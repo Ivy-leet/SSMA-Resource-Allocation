@@ -22,16 +22,14 @@ typedef array {
 }
 
 
-active proctype Env() {
+proctype Env() {
 	int action_1 = 0;
 	int action_2 = 0;
 	
 	Loop:
 		
-		
 		A1Env?action_1;
 		A2Env?action_2;
-		
 		
 		if /* request resource */
 		:: (action_1 / 10 == 1 || action_2 / 10 == 1) ->
@@ -141,7 +139,7 @@ active proctype Env() {
 }
 
 
-active proctype A1() {
+proctype A1() {
 	int req_1 = 11;
 	int req_2 = 12;
 	int req_3 = 13;
@@ -222,7 +220,7 @@ active proctype A1() {
 }
 
 
-active proctype A2() {
+proctype A2() {
 	int req_2 = 12;
 	int req_3 = 13;
 	int req_4 = 14;
@@ -312,6 +310,12 @@ init {
 	uniform[3].aa[1] = 0;
 	uniform[4].aa[0] = 0;
 	uniform[4].aa[1] = 0;
+	
+	atomic {
+		run A1();
+		run A2();
+		run Env();
+	}
 	
 }
 
