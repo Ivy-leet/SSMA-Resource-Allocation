@@ -17,14 +17,21 @@ int d1 = 2;
 int d2 = 2;
 
 
+typedef array {
+	byte aa[2]
+}
+
+
 active proctype Env() {
 	int action_1 = 0;
 	int action_2 = 0;
 	
 	Loop:
 		
+		
 		A1Env?action_1;
 		A2Env?action_2;
+		
 		
 		if /* request resource */
 		:: (action_1 / 10 == 1 || action_2 / 10 == 1) ->
@@ -125,6 +132,8 @@ active proctype Env() {
 		:: else -> skip;
 		fi
 		
+		// rounds = rounds + 1;
+		
 		EnvA1!action_1;
 		EnvA2!action_2;
 	
@@ -144,11 +153,13 @@ active proctype A1() {
 	
 	int idle = 30;
 	
+	int action = 0;
+	
 	
 	
 	/* Need to wait for Env to complete one round before going for another */
 	Loop:
-	
+		
 		if 
 		:: (d1 == 0) -> 
 			atomic {
@@ -211,6 +222,8 @@ active proctype A2() {
 	
 	int idle = 30;
 	
+	int action = 0;
+	
 	/* Need to wait for Env to complete one round before going for another */
 	Loop:		
 		if 
@@ -262,5 +275,22 @@ active proctype A2() {
 	goto Loop;
 }
 
+init {
+	array uniform[5];
+	
+	uniform[0].aa[0] = 0;
+	uniform[0].aa[1] = 0;
+	uniform[1].aa[0] = 0;
+	uniform[1].aa[1] = 0;
+	uniform[2].aa[0] = 0;
+	uniform[2].aa[1] = 0;
+	uniform[3].aa[0] = 0;
+	uniform[3].aa[1] = 0;
+	uniform[4].aa[0] = 0;
+	uniform[4].aa[1] = 0;
+	
+}
 
+
+// Properties for verification - Liveness (non-progress cycle)
 ltl live { (<>[] d1 > 0) || (<>[] d2 > 0) }
