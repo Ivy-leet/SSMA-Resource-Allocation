@@ -2,10 +2,10 @@
 
 ## Resource allocation Promela Program
 
-*****		Version 0.1.1		*****
+*****		Version 0.2		*****
 
-In this promela program, there are 2 agents and 3 resources to be allocated. 
-Agent one needs resource 1 and resource 2. Agent two needs resource 2 and resource 3.
+In this promela program, there are 2 agents and 4 resources to be allocated. 
+Agent one needs resource 1, resource 2 and resource 3. Agent two needs resource 2, resource 3 and resource 4.
 
 The number of resources that each agents needs to allocate is as follows:
 	d(A1) = 2 and d(A2) = 2
