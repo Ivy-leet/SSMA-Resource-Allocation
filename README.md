@@ -7,6 +7,9 @@
 In this promela program, there are 2 agents and 4 resources to be allocated. 
 Agent one needs resource 1, resource 2 and resource 3. Agent two needs resource 2, resource 3 and resource 4.
 
+![agent_resource drawio](https://github.com/user-attachments/assets/12b7f7c9-2f01-4f55-aad5-3355b565a708)
+
+
 The number of resources that each agents needs to allocate is as follows:
 	d(A1) = 2 and d(A2) = 2
 	
