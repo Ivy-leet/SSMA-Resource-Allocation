@@ -313,6 +313,7 @@ proctype A2() {
 }
 
 init {
+	/** initialise */
 	int i=0;
 
 	do
@@ -322,40 +323,25 @@ init {
 	}
 	:: else -> break;
 	od;
+
+	int row = 0;
 	
-	uniform[0].aa[0] = 0;
-	uniform[0].aa[1] = 0;
-	uniform[1].aa[0] = 0;
-	uniform[1].aa[1] = 0;
-	uniform[2].aa[0] = 0;
-	uniform[2].aa[1] = 0;
-	uniform[3].aa[0] = 0;
-	uniform[3].aa[1] = 0;
-	uniform[4].aa[0] = 0;
-	uniform[4].aa[1] = 0;
-	uniform[5].aa[0] = 0;
-	uniform[5].aa[1] = 0;
-	uniform[6].aa[0] = 0;
-	uniform[6].aa[1] = 0;
-	uniform[7].aa[0] = 0;
-	uniform[7].aa[1] = 0;
-	uniform[8].aa[0] = 0;
-	uniform[8].aa[1] = 0;
-	uniform[9].aa[0] = 0;
-	uniform[9].aa[1] = 0;
-	uniform[10].aa[0] = 0;
-	uniform[10].aa[1] = 0;
-	uniform[11].aa[0] = 0;
-	uniform[11].aa[1] = 0;
-	uniform[12].aa[0] = 0;
-	uniform[12].aa[1] = 0;
-	uniform[13].aa[0] = 0;
-	uniform[13].aa[1] = 0;
-	uniform[14].aa[0] = 0;
-	uniform[14].aa[1] = 0;
-	uniform[15].aa[0] = 0;
-	uniform[15].aa[1] = 0;
-	
+
+	do
+	:: row < R*4 -> atomic{
+		int column = 0;
+		do
+		:: column < 2 -> atomic{
+			uniform[row].aa[column] = 0;
+			column = column + 1;
+		}
+		:: else -> break;
+		od;
+		row = row + 1;
+	}
+	:: else -> break;
+	od;
+
 	atomic {
 		run A1();
 		run A2();
