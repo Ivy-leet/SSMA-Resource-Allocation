@@ -9,12 +9,6 @@ chan A2Env = [0] of {int};
 chan EnvA1 = [0] of {int};
 chan EnvA2 = [0] of {int};
 
-/* Resources */
-int r1 = 0;
-int r2 = 0;
-int r3 = 0;
-int r4 = 0;
-
 /* Demand */
 int d1 = 2;
 int d2 = 2;
