@@ -4,10 +4,10 @@
 #define R 4
 
 /* Channels */
-chan A1Env = [0] of {int};
-chan A2Env = [0] of {int};
-chan EnvA1 = [0] of {int};
-chan EnvA2 = [0] of {int};
+chan A1Env = [1] of {int};
+chan A2Env = [1] of {int};
+chan EnvA1 = [1] of {int};
+chan EnvA2 = [1] of {int};
 
 /* Demand */
 int d1 = 2;
@@ -22,6 +22,8 @@ typedef array {
 
 array uniform[16];
 
+int helper = 0;
+
 
 proctype Env() {
 	int action_1 = 0;
@@ -29,9 +31,28 @@ proctype Env() {
 	
 	Loop:
 		
-		A1Env?action_1;
-		A2Env?action_2;
+		if
+		:: (helper == 2) -> {
+			A1Env?action_1;
+			A2Env?action_2;
+		}
+		:: else -> goto Loop;
+		fi
+		
+
+		// A1Env?action_1;
+		// A2Env?action_2;
+		
 		int resource = -1;
+
+		if
+		:: (action_1 == action_2 && action_1 / 10 == 1 && action_2 / 10 == 1) -> atomic {
+			EnvA1!0;
+			EnvA2!0;
+			goto Loop;
+		}
+		:: else -> skip;
+		fi
 		
 		if /* request resource */
 		:: (action_1 / 10 == 1 || action_2 / 10 == 1) ->
@@ -171,53 +192,66 @@ proctype A1() {
 			if 
 			:: (d1 == 0) -> 
 				atomic {
-					A1Env!rel_all;
 					printf("Agent 1 action: release all\n");
+					helper = helper + 1;
+					A1Env!rel_all;
 				}
-			:: (resources[0] == 0) -> 
-				atomic {
-					A1Env!req_1;
-					printf("Agent 1 action: request resource 1\n");
-				}
-			:: (resources[1] == 0) -> 
-				atomic {
-					A1Env!req_2;
-					printf("Agent 1 action: request resource 2\n");
-				}
-			:: (resources[2] == 0) -> 
-				atomic {
-					A1Env!req_3;
-					printf("Agent 1 action: request resource 3\n");
-				}
-			:: (resources[0] == 1) -> 
-				atomic {
-					A1Env!rel_1;
-					printf("Agent 1 action: release resource 1\n");
-				}
-			:: (resources[1] == 1) -> 
-				atomic {
-					A1Env!rel_2;
-					printf("Agent 1 action: release resource 2\n");
-				}
-			:: (resources[2] == 1) -> 
-				atomic {
-					A1Env!rel_3;
-					printf("Agent 1 action: release resource 3\n");
-				}
-			:: (d1 > 0) -> 
-				atomic {
-					A1Env!idle;
-					printf("Agent 1 action: idle\n");
-				}
+			:: else -> { 
+				if
+				:: (resources[0] == 0) -> 
+					atomic {
+						printf("Agent 1 action: request resource 1\n");
+						helper = helper + 1;
+						A1Env!req_1;
+					}
+				:: (resources[1] == 0) -> 
+					atomic {
+						printf("Agent 1 action: request resource 2\n");
+						helper = helper + 1;
+						A1Env!req_2;
+					}
+				:: (resources[2] == 0) -> 
+					atomic {
+						printf("Agent 1 action: request resource 3\n");
+						helper = helper + 1;
+						A1Env!req_3;
+					}
+				:: (resources[0] == 1) -> 
+					atomic {
+						printf("Agent 1 action: release resource 1\n");
+						helper = helper + 1;
+						A1Env!rel_1;
+					}
+				:: (resources[1] == 1) -> 
+					atomic {
+						printf("Agent 1 action: release resource 2\n");
+						helper = helper + 1;
+						A1Env!rel_2;
+					}
+				:: (resources[2] == 1) -> 
+					atomic {
+						printf("Agent 1 action: release resource 3\n");
+						helper = helper + 1;
+						A1Env!rel_3;
+					}
+				:: (d1 > 0) -> 
+					atomic {
+						printf("Agent 1 action: idle\n");
+						helper = helper + 1;
+						A1Env!idle;
+					}
+				fi
+			}
 			fi
 		}
 		:: else -> A1Env!(prev_action)
 		fi
 		
 		EnvA1?next_observation;
+
+		helper = helper - 1;
 			
 		uniform[row_access].aa[0] = next_observation;
-		observation = next_observation;
 		
 	goto Loop;
 }
@@ -261,53 +295,66 @@ proctype A2() {
 			if 
 			:: (d2 == 0) -> 
 				atomic {
-					A2Env!rel_all;
 					printf("Agent 2 action: release all\n");
+					helper = helper + 1;
+					A2Env!rel_all;
 				}
-			:: (resources[1] == 0) -> 
-				atomic {
-					A2Env!req_2;
-					printf("Agent 2 action: request resource 2\n");
-				}
-			:: (resources[2] == 0) -> 
-				atomic {
-					A2Env!req_3;
-					printf("Agent 2 action: request resource 3\n");
-				}
-			:: (resources[3] == 0) -> 
-				atomic {
-					A2Env!req_4;
-					printf("Agent 2 action: request resource 4\n");
-				}
-			:: (resources[1] == 2) -> 
-				atomic {
-					A2Env!rel_2;
-					printf("Agent 2 action: release resource 2\n");
-				}
-			:: (resources[2] == 2) -> 
-				atomic {
-					A2Env!rel_3;
-					printf("Agent 2 action: release resource 3\n");
-				}
-			:: (resources[3] == 2) -> 
-				atomic {
-					A2Env!rel_4;
-					printf("Agent 2 action: release resource 4\n");
-				}
-			:: (d2 > 0) -> 
-				atomic {
-					A2Env!idle;
-					printf("Agent 2 action: idle\n");
-				}
+			:: else -> {
+				if
+				:: (resources[1] == 0) -> 
+					atomic {
+						printf("Agent 2 action: request resource 2\n");
+						helper = helper + 1;
+						A2Env!req_2;
+					}
+				:: (resources[2] == 0) -> 
+					atomic {
+						printf("Agent 2 action: request resource 3\n");
+						helper = helper + 1;
+						A2Env!req_3;
+					}
+				:: (resources[3] == 0) -> 
+					atomic {
+						printf("Agent 2 action: request resource 4\n");
+						helper = helper + 1;
+						A2Env!req_4;
+					}
+				:: (resources[1] == 2) -> 
+					atomic {
+						printf("Agent 2 action: release resource 2\n");
+						helper = helper + 1;
+						A2Env!rel_2;
+					}
+				:: (resources[2] == 2) -> 
+					atomic {
+						printf("Agent 2 action: release resource 3\n");
+						helper = helper + 1;
+						A2Env!rel_3;
+					}
+				:: (resources[3] == 2) -> 
+					atomic {
+						printf("Agent 2 action: release resource 4\n");
+						helper = helper + 1;
+						A2Env!rel_4;
+					}
+				:: (d2 > 0) -> 
+					atomic {
+						printf("Agent 2 action: idle\n");
+						helper = helper + 1;
+						A2Env!idle;
+					}
+				fi
+			}
 			fi
 		}
 		:: else -> A2Env!(prev_action)
 		fi
 		
 		EnvA2?next_observation;
+
+		helper = helper - 1;
 		
 		uniform[row_access].aa[1] = next_observation;
-		observation = next_observation;
 		
 	goto Loop;
 }
@@ -347,7 +394,6 @@ init {
 		run A2();
 		run Env();
 	}
-	
 }
 
 
