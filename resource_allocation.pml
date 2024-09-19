@@ -3,6 +3,21 @@
 /* Constants */
 #define R 4
 
+/** Actions Encoding */
+int req_1 = 11;
+int req_2 = 12;
+int req_3 = 13;
+int req_4 = 14;
+
+int rel_1 = 21;
+int rel_2 = 22;
+int rel_3 = 23;
+int rel_4 = 24;
+int rel_all = 20;
+
+int idle = 30;
+
+
 /* Channels */
 chan A1Env = [1] of {int};
 chan A2Env = [1] of {int};
@@ -20,7 +35,7 @@ typedef array {
 	int aa[6]
 }
 
-array uniform[40];
+array uniform[32];
 
 
 proctype Env() {
@@ -224,17 +239,6 @@ proctype Env() {
 
 proctype A1() {
 	int agent = 4;
-
-	int req_1 = 11;
-	int req_2 = 12;
-	int req_3 = 13;
-	
-	int rel_1 = 21;
-	int rel_2 = 22;
-	int rel_3 = 23;
-	int rel_all = 20;
-	
-	int idle = 30;
 	
 	int next_observation = 0;
 	int row_access;
@@ -318,17 +322,6 @@ goalAchieved:	atomic {
 
 proctype A2() {
 	int agent = 5;
-
-	int req_2 = 12;
-	int req_3 = 13;
-	int req_4 = 14;
-	
-	int rel_2 = 22;
-	int rel_3 = 23;
-	int rel_4 = 24;
-	int rel_all = 20;
-	
-	int idle = 30;
 	
 	int next_observation = 0;
 	int row_access;
@@ -422,7 +415,6 @@ init {
 	od;
 
 	int row = 0;
-	
 
 	do
 	:: row < 32 -> atomic{
