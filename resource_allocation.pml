@@ -22,9 +22,6 @@ typedef array {
 
 array uniform[40];
 
-bool A1_written = false;
-bool A2_written = false;
-
 
 proctype Env() {
 	int action_1 = 0;
@@ -45,7 +42,7 @@ proctype Env() {
 		:: row < 40 -> atomic{
 			int column = 0;
 			do
-			:: column < 4 -> atomic{
+			:: column < 4 -> {
 				if
 				:: (uniform[row].aa[column] != resources[column]) -> {
 					state_found = false;
@@ -61,7 +58,7 @@ proctype Env() {
 			od;
 
 			if
-			:: (row_found == true) -> {
+			:: (state_found == true) -> {
 				state = row;
 				break;
 			}
@@ -89,7 +86,7 @@ proctype Env() {
 					printf("Row chosen to store state: %d\n", row);
 					state = row;
 					do
-					:: column < 4 -> atomic{
+					:: column < 4 -> {
 						uniform[row].aa[column] = resources[column];
 						column = column + 1;
 					}
@@ -119,9 +116,6 @@ proctype Env() {
 		:: (action_1 == action_2 && action_1 / 10 == 1 && action_2 / 10 == 1) -> atomic {
 			EnvA1!0;
 			EnvA2!0;
-
-			A1_written = false;
-			A2_written = false;
 
 			goto Loop;
 		}
@@ -223,9 +217,6 @@ proctype Env() {
 		
 		EnvA1!action_1;
 		EnvA2!action_2;
-
-		A1_written = false;
-		A2_written = false;
 	
 	goto Loop;
 }
@@ -245,7 +236,6 @@ proctype A1() {
 	
 	int idle = 30;
 	
-	int observation = 0;
 	int next_observation = 0;
 	int row_access;
 	
@@ -253,7 +243,6 @@ proctype A1() {
 	/* Need to wait for Env to complete one round before going for another */
 	Loop:
 		row_access = 0;
-		int i = 0;
 
 		EnvA1?row_access;
 
@@ -275,7 +264,6 @@ proctype A1() {
 			:: (d1 == 0) -> 
 goalAchieved:	atomic {
 					printf("Agent 1 action: release all\n");
-					A1_written = true;
 					A1Env!rel_all;
 				}
 			:: else -> { 
@@ -283,43 +271,36 @@ goalAchieved:	atomic {
 				:: (resources[0] == 0) -> 
 					atomic {
 						printf("Agent 1 action: request resource 1\n");
-						A1_written = true;
 						A1Env!req_1;
 					}
 				:: (resources[1] == 0) -> 
 					atomic {
 						printf("Agent 1 action: request resource 2\n");
-						A1_written = true;
 						A1Env!req_2;
 					}
 				:: (resources[2] == 0) -> 
 					atomic {
 						printf("Agent 1 action: request resource 3\n");
-						A1_written = true;
 						A1Env!req_3;
 					}
 				:: (resources[0] == 1) -> 
 					atomic {
 						printf("Agent 1 action: release resource 1\n");
-						A1_written = true;
 						A1Env!rel_1;
 					}
 				:: (resources[1] == 1) -> 
 					atomic {
 						printf("Agent 1 action: release resource 2\n");
-						A1_written = true;
 						A1Env!rel_2;
 					}
 				:: (resources[2] == 1) -> 
 					atomic {
 						printf("Agent 1 action: release resource 3\n");
-						A1_written = true;
 						A1Env!rel_3;
 					}
 				:: (d1 > 0) -> 
 					atomic {
 						printf("Agent 1 action: idle\n");
-						A1_written = true;
 						A1Env!idle;
 					}
 				fi
@@ -330,8 +311,6 @@ goalAchieved:	atomic {
 		fi
 		
 		EnvA1?next_observation;
-
-		A1_written = false;
 			
 	goto Loop;
 }
@@ -351,7 +330,6 @@ proctype A2() {
 	
 	int idle = 30;
 	
-	int observation = 0; // initial state - all resources are available
 	int next_observation = 0;
 	int row_access;
 	
@@ -359,7 +337,6 @@ proctype A2() {
 	Loop:
 
 		row_access = 0;
-		int i = 0;
 
 		EnvA2?row_access;
 		
@@ -381,7 +358,6 @@ proctype A2() {
 			:: (d2 == 0) -> 
 goalAchieved:	atomic {
 					printf("Agent 2 action: release all\n");
-					A2_written = true;
 					A2Env!rel_all;
 				}
 			:: else -> {
@@ -389,43 +365,36 @@ goalAchieved:	atomic {
 				:: (resources[1] == 0) -> 
 					atomic {
 						printf("Agent 2 action: request resource 2\n");
-						A2_written = true;
 						A2Env!req_2;
 					}
 				:: (resources[2] == 0) -> 
 					atomic {
 						printf("Agent 2 action: request resource 3\n");
-						A2_written = true;
 						A2Env!req_3;
 					}
 				:: (resources[3] == 0) -> 
 					atomic {
 						printf("Agent 2 action: request resource 4\n");
-						A2_written = true;
 						A2Env!req_4;
 					}
 				:: (resources[1] == 2) -> 
 					atomic {
 						printf("Agent 2 action: release resource 2\n");
-						A2_written = true;
 						A2Env!rel_2;
 					}
 				:: (resources[2] == 2) -> 
 					atomic {
 						printf("Agent 2 action: release resource 3\n");
-						A2_written = true;
 						A2Env!rel_3;
 					}
 				:: (resources[3] == 2) -> 
 					atomic {
 						printf("Agent 2 action: release resource 4\n");
-						A2_written = true;
 						A2Env!rel_4;
 					}
 				:: (d2 > 0) -> 
 					atomic {
 						printf("Agent 2 action: idle\n");
-						A2_written = true;
 						A2Env!idle;
 					}
 				fi
@@ -436,8 +405,6 @@ goalAchieved:	atomic {
 		fi
 		
 		EnvA2?next_observation;
-
-		A2_written = false;
 		
 	goto Loop;
 }
@@ -458,10 +425,10 @@ init {
 	
 
 	do
-	:: row < 40 -> atomic{
+	:: row < 32 -> atomic{
 		int column = 0;
 		do
-		:: column < 6 -> atomic{
+		:: column < 6 -> {
 			uniform[row].aa[column] = -1;
 			column = column + 1;
 		}
@@ -483,4 +450,4 @@ init {
 #define s2 (A2@goalAchieved)
 
 // Properties for verification - Liveness (non-progress cycle)
-ltl live { (<>[] (!s1)) }
+ltl live { ([] (d1 > 0)) }
