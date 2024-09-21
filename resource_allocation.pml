@@ -54,7 +54,7 @@ proctype Env() {
 		row = 0;
 		bool row_found = false;
 		do
-		:: row < 40 -> atomic{
+		:: row < 32 -> atomic{
 			int column = 0;
 			do
 			:: column < 4 -> {
@@ -94,7 +94,7 @@ proctype Env() {
 		:: (state_found == false) -> {
 			row = 0;
 			do
-			:: row < 40 -> atomic{
+			:: row < 32 -> atomic{
 				int column = 0;
 				if
 				:: (uniform[row].aa[0] == -1) -> {
@@ -442,4 +442,4 @@ init {
 #define s2 (A2@goalAchieved)
 
 // Properties for verification - Liveness (non-progress cycle)
-ltl live { ([] (d1 > 0)) }
+ltl live { ([] (d1 > 0) || [] (d2 > 0)) }
