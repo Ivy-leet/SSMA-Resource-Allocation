@@ -85,8 +85,6 @@ proctype Env() {
 		:: else -> break;
 		od;
 
-		printf("Current state: %d\n", state);
-
 		EnvA1!state;
 		EnvA2!state;
 
@@ -98,7 +96,6 @@ proctype Env() {
 				int column = 0;
 				if
 				:: (uniform[row].aa[0] == -1) -> {
-					printf("Row chosen to store state: %d\n", row);
 					state = row;
 					do
 					:: column < 4 -> {
@@ -136,6 +133,9 @@ proctype Env() {
 		}
 		:: else -> skip;
 		fi
+
+		uniform[state].aa[4] = action_1;
+		uniform[state].aa[5] = action_2;
 		
 		if /* request resource */
 		:: (action_1 / 10 == 1 || action_2 / 10 == 1) ->
@@ -226,9 +226,6 @@ proctype Env() {
 			fi
 		:: else -> skip;
 		fi
-
-		uniform[state].aa[4] = action_1;
-		uniform[state].aa[5] = action_2;
 		
 		EnvA1!action_1;
 		EnvA2!action_2;
@@ -249,8 +246,6 @@ proctype A1() {
 		row_access = 0;
 
 		EnvA1?row_access;
-
-		printf("row access agent 1: %d\n", row_access);
 		
 		int prev_action = 0;
 		if
@@ -332,8 +327,6 @@ proctype A2() {
 		row_access = 0;
 
 		EnvA2?row_access;
-		
-		printf("row access agent 2: %d\n", row_access);
 
 		int prev_action = 0;
 		if

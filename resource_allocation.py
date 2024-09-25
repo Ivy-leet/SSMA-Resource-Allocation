@@ -1,6 +1,21 @@
 import subprocess
 import re
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
 
+
+def run_promela_program():
+    result = subprocess.run(['resource_allocation.bat'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+
+    # Access the standard output and error
+    output = result.stdout
+    error = result.stderr
+
+    # print(output)
+    
+    return output
+    
 def extract_info(line):
     bracket_substrings = []
     start = line.find('[')
@@ -15,41 +30,43 @@ def extract_info(line):
     # Combine the results
     result = bracket_substrings + [equal_substring]
     return result
+   
+def create_heatmap(uniform_strategies):
+    max_x = max([d[0] for d in uniform_strategies]) + 1
+    max_y = max([d[1] for d in uniform_strategies]) + 1
 
-result = subprocess.run(['spin', '-w', '-n1234', '-u500', 'resource_allocation.pml'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+    matrix = np.full((max_x, max_y), np.nan)
 
-# Access the standard output and error
-output = result.stdout
-error = result.stderr
+    for item in uniform_strategies:
+        x, y, value = item
+        matrix[x, y] = value
 
-pattern = r"uniform\[\d+\]\.aa\[\d+\] = \d+"
+    # Plotting the heatmap
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(matrix, annot=True, cmap='coolwarm', cbar=True, linewidths=0.5)
 
-uniform_array_string = re.findall(pattern, output)
+    plt.title("Heatmap of Values")
+    plt.xlabel("Values")
+    plt.ylabel("State")
+    plt.show()
+     
+def main():
+    output = run_promela_program()
+    
+    pattern = r"uniform\[\d+\]\.aa\[\d+\] = [+-]?\d+"
 
-# Join the extracted strings with newlines
-result = "\n".join(uniform_array_string)
+    uniform_array_string = re.findall(pattern, output)
 
-# Print the extracted result
-print(result)
+    result = "\n".join(uniform_array_string)
+    
+    uniform_strategy = []
+    for line in result.splitlines():
+        results = extract_info(line)
+        uniform_strategy.append([int(i) for i in results])
+    
+    create_heatmap(uniform_strategy)
+    
 
-rows, cols = (16, 2)
-
-uniform_strategy = [[0]*cols]*rows
-
-lines = []
-for line in result.splitlines():
-    results = extract_info(line)
-    x = int(results[0])
-    y = int(results[1])
-    action = int(results[2])
-    print(f'x: {x}, y: {y}, action: {action}')
-    uniform_strategy[x][y] = action
-    lines.append(results)
-
-print(uniform_strategy)
-
-
-# print("Output:")
-# print(output)
-# print("Error:")
-# print(error)
+if __name__ == '__main__':
+    main()
+    
