@@ -12,7 +12,9 @@ def run_promela_program():
     output = result.stdout
     error = result.stderr
 
-    # print(output)
+    f = open('output.txt', 'w')
+    f.write(output)
+    f.close()
     
     return output
     
