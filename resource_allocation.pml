@@ -126,6 +126,7 @@ proctype Env() {
 
 		if
 		:: (action_1 == action_2 && action_1 / 10 == 1 && action_2 / 10 == 1) -> atomic {
+			printf("Same resource (%u) requested by agent 1 and agent 2! Doing nothing...", resource);
 			EnvA1!0;
 			EnvA2!0;
 
@@ -152,6 +153,7 @@ proctype Env() {
 					:: (resource == 4 && resources[resource-1] == 0) -> resources[resource-1] = 1; d1 = d1 - 1;
 					:: else -> skip;
 					fi
+					printf("Resource granted to agent 1: %u\n", resource);
 				:: else -> skip;
 				fi
 				
@@ -166,6 +168,7 @@ proctype Env() {
 					:: (resource == 4 && resources[resource-1] == 0) -> resources[resource-1] = 2; d2 = d2 -1;
 					:: else -> skip;
 					fi
+					printf("Resource granted to agent 2: %u\n", resource);
 				:: else -> skip;
 				fi
 				
@@ -306,7 +309,10 @@ goalAchieved:	atomic {
 			}
 			fi
 		}
-		:: else -> A1Env!(prev_action)
+		:: else -> atomic {
+			printf("Agent 1 action: %u\n", prev_action);
+			A1Env!(prev_action)
+		}
 		fi
 		
 		EnvA1?next_observation;
@@ -387,7 +393,10 @@ goalAchieved:	atomic {
 			}
 			fi
 		}
-		:: else -> A2Env!(prev_action)
+		:: else -> atomic {
+			printf("Agent 2 action: %u\n", prev_action);
+			A2Env!(prev_action);
+		}
 		fi
 		
 		EnvA2?next_observation;

@@ -39,6 +39,9 @@ pan.*
 # Compressed
 *.zip
 
-# Diagrams and Picturs
+# Diagrams and Pictures
 *.drawio
 *.png
+
+# Textfiles
+*.txt
