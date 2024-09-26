@@ -1,3 +1,4 @@
+import platform
 import subprocess
 import re
 import matplotlib.pyplot as plt
@@ -6,7 +7,12 @@ import seaborn as sns
 
 
 def run_promela_program():
-    result = subprocess.run(['resource_allocation.bat'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+    file_extension = 'sh'
+    
+    if platform.system() == 'Windows':
+        file_extension = 'bat'
+        
+    result = subprocess.run([f'resource_allocation.{file_extension}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
 
     # Access the standard output and error
     output = result.stdout
