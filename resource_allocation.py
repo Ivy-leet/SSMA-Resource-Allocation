@@ -12,14 +12,15 @@ def run_promela_program():
     if platform.system() == 'Windows':
         file_extension = 'bat'
         
-    result = subprocess.run(['sh', f'resource_allocation.{file_extension}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+    result = subprocess.run([f'resource_allocation.{file_extension}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
 
     # Access the standard output and error
     output = result.stdout
     error = result.stderr
+    code = result.check_returncode()
     
-    if error:
-        raise Exception(error)
+    if code:
+        raise Exception(f'Return code: {code} \n{error}')
 
     f = open('output.txt', 'w')
     f.write(output)
@@ -64,7 +65,7 @@ def main():
         output = run_promela_program()
         
         # get uniform strategy 2D array
-        pattern = r"uniform\[\d+\]\.aa\[\d+\] = [+-]?\d+"
+        pattern = r"uniform\[\d+\]\.aa\[\d+\] = \d+"
 
         uniform_array_string = re.findall(pattern, output)
 

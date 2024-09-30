@@ -186,18 +186,19 @@ proctype Env() {
 			:: (resource == 2) -> resources[resource-1] = 0; d1 = d1 + 1;
 			:: (resource == 3) -> resources[resource-1] = 0; d1 = d1 + 1;
 			:: (resource == 4) -> resources[resource-1] = 0; d1 = d1 + 1;
-			:: (resource == 0) -> atomic{ /* release all */
+			:: (resource == 0) -> { /* release all */
 				int i = 0;
 				do
 				:: i < R ->
 					if
-					:: resources[i] == 1 -> resources[i] = 0
+					:: resources[i] == 1 -> resources[i] = 0;
+					:: else -> skip;
 					fi;
 					i = i+1;
 				:: else -> break;
 				od;
 				
-				d1 = 2; 
+A1GoalAchieved:	d1 = 2; 
 			}
 			:: else -> skip;
 			fi
@@ -212,18 +213,19 @@ proctype Env() {
 			:: (resource == 1) -> resources[resource-1] = 0; d2 = d2 + 1;
 			:: (resource == 2) -> resources[resource-1] = 0; d2 = d2 + 1;
 			:: (resource == 3) -> resources[resource-1] = 0; d2 = d2 + 1;
-			:: (resource == 0) -> atomic{ /* release all */
+			:: (resource == 0) -> { /* release all */
 				int i = 0;
 				do
 				:: i < R ->
 					if
-					:: resources[i] == 2 -> resources[i] = 0
+					:: resources[i] == 2 -> resources[i] = 0;
+					:: else -> skip;
 					fi;
 					i = i+1;
 				:: else -> break;
 				od;
 				
-				d2 = 2;
+A2GoalAchieved:	d2 = 2;
 			}
 			:: else -> skip;
 			fi
@@ -264,7 +266,7 @@ proctype A1() {
 		:: (prev_action == 0) -> {
 			if 
 			:: (d1 == 0) -> 
-goalAchieved:	atomic {
+				atomic {
 					printf("Agent 1 action: release all\n");
 					A1Env!rel_all;
 				}
@@ -316,7 +318,7 @@ goalAchieved:	atomic {
 		fi
 		
 		EnvA1?next_observation;
-			
+
 	goto Loop;
 }
 
@@ -348,7 +350,7 @@ proctype A2() {
 		:: (prev_action == 0) -> {
 			if 
 			:: (d2 == 0) -> 
-goalAchieved:	atomic {
+				atomic {
 					printf("Agent 2 action: release all\n");
 					A2Env!rel_all;
 				}
@@ -400,7 +402,7 @@ goalAchieved:	atomic {
 		fi
 		
 		EnvA2?next_observation;
-		
+
 	goto Loop;
 }
 
@@ -440,8 +442,8 @@ init {
 	}
 }
 
-#define s1 (A1@goalAchieved)
-#define s2 (A2@goalAchieved)
+#define s1 (Env@A1GoalAchieved)
+#define s2 (Env@A2GoalAchieved)
 
 // Properties for verification - Liveness (non-progress cycle)
-ltl live { ([] (d1 > 0) || [] (d2 > 0)) }
+ltl live { ([] (!s1) || [] (!s2)) }
