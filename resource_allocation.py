@@ -6,13 +6,12 @@ import numpy as np
 import seaborn as sns
 
 
-def run_promela_program():
-    file_extension = 'sh'
-    
-    if platform.system() == 'Windows':
-        file_extension = 'bat'
-        
-    result = subprocess.run([f'resource_allocation.{file_extension}'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True)
+def run_promela_program(claim: str):
+    result = subprocess.run(['sh', 'resource_allocation.sh', claim], 
+                            capture_output=True,
+                            text=True, 
+                            shell=False,
+                            creationflags=subprocess.CREATE_NO_WINDOW)
 
     # Access the standard output and error
     output = result.stdout
@@ -40,6 +39,29 @@ def extract_info(line):
 
     result = bracket_substrings + [equal_substring]
     return result
+
+def iterative_step():
+    claims = ['safety', 'live']
+    
+    for claim in claims:
+        run(claim)
+        
+def run(claim):
+    output = run_promela_program(claim)
+    
+    # get uniform strategy 2D array
+    pattern = r'uniform\[\d+\]\.aa\[\d+\] = \d+'
+
+    uniform_array_string = re.findall(pattern, output)
+
+    result = '\n'.join(uniform_array_string)
+    
+    uniform_strategy = []
+    for line in result.splitlines():
+        results = extract_info(line)
+        uniform_strategy.append([int(i) for i in results])
+    
+    create_heatmap(uniform_strategy)
    
 def create_heatmap(uniform_strategies):
     max_x = max([d[0] for d in uniform_strategies]) + 1
@@ -55,28 +77,14 @@ def create_heatmap(uniform_strategies):
     plt.figure(figsize=(10, 8))
     sns.heatmap(matrix, annot=True, cmap='coolwarm', cbar=True, linewidths=0.5)
 
-    plt.title("Resource Allocation Uniform Strategy")
-    plt.xlabel("Values")
-    plt.ylabel("State")
+    plt.title('Resource Allocation Uniform Strategy')
+    plt.xlabel('Values')
+    plt.ylabel('State')
     plt.show()
      
 def main():
     try:
-        output = run_promela_program()
-        
-        # get uniform strategy 2D array
-        pattern = r"uniform\[\d+\]\.aa\[\d+\] = \d+"
-
-        uniform_array_string = re.findall(pattern, output)
-
-        result = "\n".join(uniform_array_string)
-        
-        uniform_strategy = []
-        for line in result.splitlines():
-            results = extract_info(line)
-            uniform_strategy.append([int(i) for i in results])
-        
-        create_heatmap(uniform_strategy)
+        iterative_step()
     except Exception:
         raise
     

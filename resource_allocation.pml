@@ -446,4 +446,5 @@ init {
 #define s2 (Env@A2GoalAchieved)
 
 // Properties for verification - Liveness (non-progress cycle)
-ltl live { ([] (!s1) || [] (!s2)) }
+ltl safe { ([] (!s1) || [] (!s2)) }
+ltl live { (<>[] (!s1) || <>[] (!s2)) }
