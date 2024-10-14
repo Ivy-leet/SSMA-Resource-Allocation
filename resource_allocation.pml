@@ -147,10 +147,7 @@ proctype Env() {
 					resource = action_1 % 10;
 					printf("Resource requested by agent 1: %u\n", resource);
 					if 
-					:: (resource == 1 && resources[resource-1] == 0) -> resources[resource-1] = 1; d1 = d1 - 1;
-					:: (resource == 2 && resources[resource-1] == 0) -> resources[resource-1] = 1; d1 = d1 - 1;
-					:: (resource == 3 && resources[resource-1] == 0) -> resources[resource-1] = 1; d1 = d1 - 1;
-					:: (resource == 4 && resources[resource-1] == 0) -> resources[resource-1] = 1; d1 = d1 - 1;
+					:: (resources[resource-1] == 0) -> resources[resource-1] = 1; d1 = d1 - 1;
 					:: else -> skip;
 					fi
 					printf("Resource granted to agent 1: %u\n", resource);
@@ -162,10 +159,7 @@ proctype Env() {
 					resource = action_2 % 10;
 					printf("Resource requested by agent 2: %u\n", resource);
 					if 
-					:: (resource == 1 && resources[resource-1] == 0) -> resources[resource-1] = 2; d2 = d2 -1;
-					:: (resource == 2 && resources[resource-1] == 0) -> resources[resource-1] = 2; d2 = d2 -1;
-					:: (resource == 3 && resources[resource-1] == 0) -> resources[resource-1] = 2; d2 = d2 -1;
-					:: (resource == 4 && resources[resource-1] == 0) -> resources[resource-1] = 2; d2 = d2 -1;
+					:: (resources[resource-1] == 0) -> resources[resource-1] = 2; d2 = d2 -1;
 					:: else -> skip;
 					fi
 					printf("Resource granted to agent 2: %u\n", resource);
@@ -182,10 +176,6 @@ proctype Env() {
 			resource = action_1 % 10;
 			printf("Resource released by agent 1: %u\n", resource);
 			if
-			:: (resource == 1) -> resources[resource-1] = 0; d1 = d1 + 1;
-			:: (resource == 2) -> resources[resource-1] = 0; d1 = d1 + 1;
-			:: (resource == 3) -> resources[resource-1] = 0; d1 = d1 + 1;
-			:: (resource == 4) -> resources[resource-1] = 0; d1 = d1 + 1;
 			:: (resource == 0) -> { /* release all */
 				int i = 0;
 				do
@@ -200,7 +190,9 @@ proctype Env() {
 				
 A1GoalAchieved:	d1 = 2; 
 			}
-			:: else -> skip;
+			:: else -> {
+				resources[resource-1] = 0; d1 = d1 + 1;
+			}
 			fi
 		:: else -> skip;
 		fi
@@ -210,9 +202,6 @@ A1GoalAchieved:	d1 = 2;
 			resource = action_2 % 10;
 			printf("Resource released by agent 2: %u\n", resource);
 			if
-			:: (resource == 1) -> resources[resource-1] = 0; d2 = d2 + 1;
-			:: (resource == 2) -> resources[resource-1] = 0; d2 = d2 + 1;
-			:: (resource == 3) -> resources[resource-1] = 0; d2 = d2 + 1;
 			:: (resource == 0) -> { /* release all */
 				int i = 0;
 				do
@@ -227,7 +216,9 @@ A1GoalAchieved:	d1 = 2;
 				
 A2GoalAchieved:	d2 = 2;
 			}
-			:: else -> skip;
+			:: else -> {
+				resources[resource-1] = 0; d2 = d2 + 1;
+			}
 			fi
 		:: else -> skip;
 		fi
