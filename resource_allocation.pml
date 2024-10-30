@@ -37,6 +37,13 @@ typedef array {
 
 array uniform[32];
 
+bool hasGoalAchieved = false;
+
+byte rounds = 0;
+
+byte A1_goal_achieved = 0;
+byte A2_goal_achieved = 0;
+
 
 proctype Env() {
 	int action_1 = 0;
@@ -173,6 +180,7 @@ proctype Env() {
 		
 		if /* release resource */
 		:: (action_1 / 10 == 2) ->
+			hasGoalAchieved = true;
 			resource = action_1 % 10;
 			printf("Resource released by agent 1: %u\n", resource);
 			if
@@ -190,7 +198,7 @@ proctype Env() {
 				
 A1GoalAchieved:	d1 = 2; 
 			}
-			:: else -> {
+			:: else -> atomic {
 				resources[resource-1] = 0; d1 = d1 + 1;
 			}
 			fi
@@ -199,6 +207,7 @@ A1GoalAchieved:	d1 = 2;
 		
 		if /* release resource */
 		:: (action_2 / 10 == 2) ->
+			hasGoalAchieved = true;
 			resource = action_2 % 10;
 			printf("Resource released by agent 2: %u\n", resource);
 			if
@@ -222,9 +231,14 @@ A2GoalAchieved:	d2 = 2;
 			fi
 		:: else -> skip;
 		fi
+
+		if
+		:: (hasGoalAchieved) -> rounds++;
+		:: else -> skip;
+		fi
 		
 		EnvA1!action_1;
-		EnvA2!action_2;
+end:	EnvA2!action_2;
 	
 	goto Loop;
 }
@@ -258,6 +272,9 @@ proctype A1() {
 			if 
 			:: (d1 == 0) -> 
 				atomic {
+					A1_goal_achieved = A1_goal_achieved + 1;
+					
+		
 					printf("Agent 1 action: release all\n");
 					A1Env!rel_all;
 				}
@@ -342,6 +359,7 @@ proctype A2() {
 			if 
 			:: (d2 == 0) -> 
 				atomic {
+					A2_goal_achieved = A2_goal_achieved + 1;
 					printf("Agent 2 action: release all\n");
 					A2Env!rel_all;
 				}
@@ -435,7 +453,9 @@ init {
 
 #define s1 (Env@A1GoalAchieved)
 #define s2 (Env@A2GoalAchieved)
+#define liveness ((<>[] (!s1) || <>[] (!s2)))
 
 // Properties for verification - Liveness (non-progress cycle)
 ltl safe { ([] (!s1) || [] (!s2)) }
 ltl live { (<>[] (!s1) || <>[] (!s2)) }
+ltl payload { liveness || <> (A1_goal_achieved + A2_goal_achieved > 3) }
