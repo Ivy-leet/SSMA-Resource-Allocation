@@ -179,12 +179,12 @@ proctype Env() {
 		fi
 		
 		if /* release resource */
-		:: (action_1 / 10 == 2) ->
-			hasGoalAchieved = true;
+		:: (action_1 / 10 == 2) -> {
 			resource = action_1 % 10;
 			printf("Resource released by agent 1: %u\n", resource);
 			if
 			:: (resource == 0) -> { /* release all */
+
 				int i = 0;
 				do
 				:: i < R ->
@@ -195,19 +195,21 @@ proctype Env() {
 					i = i+1;
 				:: else -> break;
 				od;
-				
+
+				hasGoalAchieved = true;
+				A1_goal_achieved++;
 A1GoalAchieved:	d1 = 2; 
 			}
 			:: else -> atomic {
 				resources[resource-1] = 0; d1 = d1 + 1;
 			}
 			fi
+		}
 		:: else -> skip;
 		fi
 		
 		if /* release resource */
 		:: (action_2 / 10 == 2) ->
-			hasGoalAchieved = true;
 			resource = action_2 % 10;
 			printf("Resource released by agent 2: %u\n", resource);
 			if
@@ -223,6 +225,8 @@ A1GoalAchieved:	d1 = 2;
 				:: else -> break;
 				od;
 				
+				A2_goal_achieved++;
+				hasGoalAchieved = true;
 A2GoalAchieved:	d2 = 2;
 			}
 			:: else -> {
@@ -238,7 +242,7 @@ A2GoalAchieved:	d2 = 2;
 		fi
 		
 		EnvA1!action_1;
-end:	EnvA2!action_2;
+		EnvA2!action_2;
 	
 	goto Loop;
 }
@@ -266,15 +270,14 @@ proctype A1() {
 		fi
 
 		printf("previous action of agent 1: %d\n", prev_action);
+
+		
 		
 		if 
 		:: (prev_action == 0) -> {
 			if 
 			:: (d1 == 0) -> 
 				atomic {
-					A1_goal_achieved = A1_goal_achieved + 1;
-					
-		
 					printf("Agent 1 action: release all\n");
 					A1Env!rel_all;
 				}
@@ -320,8 +323,9 @@ proctype A1() {
 			fi
 		}
 		:: else -> atomic {
+
 			printf("Agent 1 action: %u\n", prev_action);
-			A1Env!(prev_action)
+			A1Env!(prev_action);
 		}
 		fi
 		
@@ -359,7 +363,6 @@ proctype A2() {
 			if 
 			:: (d2 == 0) -> 
 				atomic {
-					A2_goal_achieved = A2_goal_achieved + 1;
 					printf("Agent 2 action: release all\n");
 					A2Env!rel_all;
 				}
@@ -399,7 +402,7 @@ proctype A2() {
 					atomic {
 						printf("Agent 2 action: idle\n");
 						A2Env!idle;
-					}
+				}
 				fi
 			}
 			fi
