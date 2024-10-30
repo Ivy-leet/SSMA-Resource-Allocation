@@ -4,90 +4,106 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from gui import create_gui
 
 
-def run_promela_program(claim: str):
-    result = subprocess.run(['sh', 'resource_allocation.sh', claim], 
-                            capture_output=True,
-                            text=True, 
-                            shell=False,
-                            creationflags=subprocess.CREATE_NO_WINDOW)
-
-    # Access the standard output and error
-    output = result.stdout
-    error = result.stderr
-    code = result.check_returncode()
+class StrategySynthesis:
+    Payload = 1
     
-    if code:
-        raise Exception(f'Return code: {code} \n{error}')
+    
+    @staticmethod
+    def run_promela_program(claim: str):
+        result = subprocess.run(['sh', 'resource_allocation.sh', claim], 
+                                capture_output=True,
+                                text=True, 
+                                shell=False,
+                                creationflags=subprocess.CREATE_NO_WINDOW)
 
-    f = open('output.txt', 'w')
-    f.write(output)
-    f.close()
-    
-    return output
-    
-def extract_info(line):
-    bracket_substrings = []
-    start = line.find('[')
-    while start != -1:
-        end = line.find(']', start)
-        bracket_substrings.append(line[start+1:end])
-        start = line.find('[', end)
+        # Access the standard output and error
+        output = result.stdout
+        error = result.stderr
+        code = result.check_returncode()
         
-    equal_substring = line.split('=')[-1].strip()
+        if code:
+            raise Exception(f'Return code: {code} \n{error}')
 
-    result = bracket_substrings + [equal_substring]
-    return result
-
-def iterative_step():
-    claims = ['safety', 'live']
-    
-    for claim in claims:
-        run(claim)
+        f = open('output.txt', 'w')
+        f.write(output)
+        f.close()
         
-def run(claim):
-    output = run_promela_program(claim)
+        return output
     
-    # get uniform strategy 2D array
-    pattern = r'uniform\[\d+\]\.aa\[\d+\] = \d+'
+    @staticmethod
+    def extract_variables(lines):
+        goal_pattern = r'A\d+_goal_achieved = \d+'
+        
+        goals = re.findall(goal_pattern, lines)
+        
+        a1_goals_achieved = 0
+        a2_goals_achieved = 0
+        for goal_var in goals:
+            goal = goal_var.split('=')[-1]
+            if 'A1' in goal_var:
+                a1_goals_achieved = goal
+            else:
+                a2_goals_achieved = goal
+        
+        return (a1_goals_achieved, a2_goals_achieved)
+        
+    
+    @staticmethod
+    def extract_state_info(lines):
+        # get uniform strategy 2D array
+        pattern = r'uniform\[\d+\]\.aa\[\d+\] = \d+'
 
-    uniform_array_string = re.findall(pattern, output)
+        uniform_array_string = re.findall(pattern, lines)
 
-    result = '\n'.join(uniform_array_string)
-    
-    uniform_strategy = []
-    for line in result.splitlines():
-        results = extract_info(line)
-        uniform_strategy.append([int(i) for i in results])
-    
-    create_heatmap(uniform_strategy)
+        result = '\n'.join(uniform_array_string)
+        
+        uniform_strategy = []
+        for line in result.splitlines():
+            bracket_substrings = []
+            start = line.find('[')
+            while start != -1:
+                end = line.find(']', start)
+                bracket_substrings.append(line[start+1:end])
+                start = line.find('[', end)
+                
+            equal_substring = line.split('=')[-1].strip()
+
+            result = bracket_substrings + [equal_substring]
+            uniform_strategy.append([int(i) for i in result])
+            
+        
+        return uniform_strategy
+
+    def iterative_step(self, claim):
+        
+        
+        for claim in claims:
+            run(claim)
+            
+    def run(self, claim):
+        output = StrategySynthesis.run_promela_program(claim)
+        
+        goals = StrategySynthesis.extract_variables(output)
+        uniform_strategy = StrategySynthesis.extract_state_info(output)
+        
+        create_gui(uniform_strategy)
    
-def create_heatmap(uniform_strategies):
-    max_x = max([d[0] for d in uniform_strategies]) + 1
-    max_y = max([d[1] for d in uniform_strategies]) + 1
-
-    matrix = np.zeros((max_x, max_y))
-
-    for item in uniform_strategies:
-        x, y, value = item
-        matrix[x, y] = value
-
-    # Plotting the heatmap
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(matrix, annot=True, cmap='coolwarm', cbar=True, linewidths=0.5)
-
-    plt.title('Resource Allocation Uniform Strategy')
-    plt.xlabel('Values')
-    plt.ylabel('State')
-    plt.show()
+    def execute(self):
+        claims = ['live']
+        for claim in claims:
+            self.run(claim)
+        # iterative_step()
      
 def main():
     try:
-        iterative_step()
+        SS = StrategySynthesis()
+        SS.execute()
     except Exception:
         raise
-    
+     
 
 if __name__ == '__main__':
     main()
