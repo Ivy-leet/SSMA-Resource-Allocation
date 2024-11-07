@@ -183,7 +183,7 @@ class StrategySynthesis:
         i, best_payoff, previous_best = self.iterative_step()
         
         print(f'Best payoff found after {i} iterations: {best_payoff[-1]}')
-        print(f'Running verification to obtain the highest payoff')
+        print(f'Running verification to obtain the highest payoff. Output of verification can be found in output.txt')
         
         _ = self.run('payoff', previous_best, True)    
          
