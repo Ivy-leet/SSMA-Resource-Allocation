@@ -45,3 +45,6 @@ pan.*
 
 # Textfiles
 *.txt
+
+# Python cache
+*.pyc

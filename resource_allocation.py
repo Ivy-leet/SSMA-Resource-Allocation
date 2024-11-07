@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from gui import create_gui
+from typing import Tuple
 
 
 class StrategySynthesis:
@@ -17,11 +18,10 @@ class StrategySynthesis:
     Claims = {
         'safe': '([] (!s1) || [] (!s2))',
         'live': '(<>[] (!s1) || <>[] (!s2))',
-        'payload': '[] (A1_goal_achieved + A2_goal_achieved <= alpha )'
+        'payoff': '[] (A1_goal_achieved + A2_goal_achieved <= alpha )'
     }
     
     def run_promela_program(self, claim: str, payload = 0):
-        self.construct_ltl(claim)
         result = subprocess.run(['sh', 'resource_allocation.sh', claim], 
                                 capture_output=True,
                                 text=True, 
@@ -39,8 +39,6 @@ class StrategySynthesis:
         f = open('output.txt', 'w')
         f.write(output)
         f.close()
-        
-        self.remove_ltl()
         
         return output
     
@@ -110,8 +108,8 @@ class StrategySynthesis:
         return uniform_strategy
     
     
-    def construct_ltl(self, claim):
-        alpha = math.ceil(self.NumRounds * self.Payload)
+    def construct_ltl(self, claim, num_of_rounds, payoff):
+        alpha = math.ceil(num_of_rounds * payoff)
         
         ltl = f'ltl {claim} {{ {self.Claims[claim]} }}'
         ltl = ltl.replace('alpha', str(alpha))
@@ -137,43 +135,58 @@ class StrategySynthesis:
             f.truncate()
     
     def iterative_step(self):
-        best_payload = self.run('safe')
+        best_payoff = self.run('live')
+        previous_best = best_payoff
         
-        # payload = self.run('payload')
-        # # i=0
+        payoff = self.run('payoff', best_payoff)
         
-        # best_scores = [best_payload]
-        # while payload >= best_payload:
-        #     if payload > best_payload:
-        #         best_payload = payload
-        #         best_scores.append(best_payload)
+        best_scores = [best_payoff]
+        
+        i = 1
+        while payoff[-1] >= best_payoff[-1]:
+            i+=1
+            if payoff[-1] > best_payoff[-1]:
+                previous_best = best_payoff
+                best_payoff = payoff
+                best_scores.append(best_payoff)
                 
-        #     payload = self.run('payload')
+            payoff = self.run('payoff', best_payoff)
             
-        # print(f'Best payload = {best_payload}, Best Scores: {best_scores}')
+        print(f'Best payoff = {best_payoff}, Best Scores: {best_scores}')
+        
+        return i, best_payoff, previous_best
             
             
-    def run(self, claim, should_create_gui: bool = True):
+    def run(self, claim, variables: Tuple=(1, 1), should_create_gui: bool = False):
+        ltl = self.construct_ltl(claim, variables[0], variables[1])
+        
+        print(f'LTL formula for verification: {ltl}')
+        
         output = self.run_promela_program(claim)
         
-        model_output = StrategySynthesis.extract_output(output)
+        self.remove_ltl()
+        
+        # model_output = StrategySynthesis.extract_output(output)
         
         a1_goals_achieved, a2_goals_achieved, num_of_rounds = StrategySynthesis.extract_variables(output)
         
         payoff = round( 1 / num_of_rounds * (a1_goals_achieved + a2_goals_achieved), 3)
-        
-        self.NumRounds, self.Payload = num_of_rounds, payoff
         
         uniform_strategy = StrategySynthesis.extract_state_info(output)
         
         if should_create_gui:
             create_gui(uniform_strategy, (a1_goals_achieved, a2_goals_achieved, num_of_rounds, payoff))
         
-        return payoff
+        return num_of_rounds, payoff
    
     def execute(self):
-        self.iterative_step()
-     
+        i, best_payoff, previous_best = self.iterative_step()
+        
+        print(f'Best payoff found after {i} iterations: {best_payoff[-1]}')
+        print(f'Running verification to obtain the highest payoff')
+        
+        _ = self.run('payoff', previous_best, True)    
+         
 def main():
     try:
         SS = StrategySynthesis()
