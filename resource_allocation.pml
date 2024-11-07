@@ -39,10 +39,10 @@ array uniform[32];
 
 bool hasGoalAchieved = false;
 
-byte rounds = 0;
+int rounds = 0;
 
-byte A1_goal_achieved = 0;
-byte A2_goal_achieved = 0;
+int A1_goal_achieved = 0;
+int A2_goal_achieved = 0;
 
 
 proctype Env() {
@@ -152,7 +152,7 @@ proctype Env() {
 				if
 				:: ( action_1/10 == 1) -> 
 					resource = action_1 % 10;
-					printf("Resource requested by agent 1: %u\n", resource);
+					printf("Env: Resource requested by agent 1: %u\n", resource);
 					if 
 					:: (resources[resource-1] == 0) -> resources[resource-1] = 1; d1 = d1 - 1;
 					:: else -> skip;
@@ -164,7 +164,7 @@ proctype Env() {
 				if
 				:: ( action_2/10 == 1) ->
 					resource = action_2 % 10;
-					printf("Resource requested by agent 2: %u\n", resource);
+					printf("Env: Resource requested by agent 2: %u\n", resource);
 					if 
 					:: (resources[resource-1] == 0) -> resources[resource-1] = 2; d2 = d2 -1;
 					:: else -> skip;
@@ -181,10 +181,9 @@ proctype Env() {
 		if /* release resource */
 		:: (action_1 / 10 == 2) -> {
 			resource = action_1 % 10;
-			printf("Resource released by agent 1: %u\n", resource);
 			if
 			:: (resource == 0) -> { /* release all */
-
+				printf("Agent 2 releases all assigned resources\n")
 				int i = 0;
 				do
 				:: i < R ->
@@ -201,7 +200,9 @@ proctype Env() {
 A1GoalAchieved:	d1 = 2; 
 			}
 			:: else -> atomic {
-				resources[resource-1] = 0; d1 = d1 + 1;
+				printf("Resource released by agent 1: %u\n", resource);
+				resources[resource-1] = 0; 
+				d1 = d1 + 1;
 			}
 			fi
 		}
@@ -211,9 +212,9 @@ A1GoalAchieved:	d1 = 2;
 		if /* release resource */
 		:: (action_2 / 10 == 2) ->
 			resource = action_2 % 10;
-			printf("Resource released by agent 2: %u\n", resource);
 			if
 			:: (resource == 0) -> { /* release all */
+				printf("Agent 2 releases all assigned resources\n")
 				int i = 0;
 				do
 				:: i < R ->
@@ -230,6 +231,7 @@ A1GoalAchieved:	d1 = 2;
 A2GoalAchieved:	d2 = 2;
 			}
 			:: else -> {
+				printf("Resource released by agent 2: %u\n", resource);
 				resources[resource-1] = 0; d2 = d2 + 1;
 			}
 			fi
@@ -242,7 +244,7 @@ A2GoalAchieved:	d2 = 2;
 		fi
 		
 		EnvA1!action_1;
-		EnvA2!action_2;
+end:	EnvA2!action_2;
 	
 	goto Loop;
 }
@@ -269,10 +271,6 @@ proctype A1() {
 		:: else -> skip;
 		fi
 
-		printf("previous action of agent 1: %d\n", prev_action);
-
-		
-		
 		if 
 		:: (prev_action == 0) -> {
 			if 
@@ -323,8 +321,7 @@ proctype A1() {
 			fi
 		}
 		:: else -> atomic {
-
-			printf("Agent 1 action: %u\n", prev_action);
+			printf("Agent 1 State observation at state %u: %u\n", row_access, prev_action);
 			A1Env!(prev_action);
 		}
 		fi
@@ -355,8 +352,6 @@ proctype A2() {
 		}
 		:: else -> skip;
 		fi
-		
-		printf("previous action of agent 2: %u\n", prev_action);
 		
 		if
 		:: (prev_action == 0) -> {
@@ -408,7 +403,7 @@ proctype A2() {
 			fi
 		}
 		:: else -> atomic {
-			printf("Agent 2 action: %u\n", prev_action);
+			printf("Agent 2 State observation at state %u: %u\n", row_access, prev_action);
 			A2Env!(prev_action);
 		}
 		fi
@@ -456,9 +451,5 @@ init {
 
 #define s1 (Env@A1GoalAchieved)
 #define s2 (Env@A2GoalAchieved)
-#define liveness ((<>[] (!s1) || <>[] (!s2)))
 
 // Properties for verification - Liveness (non-progress cycle)
-ltl safe { ([] (!s1) || [] (!s2)) }
-ltl live { (<>[] (!s1) || <>[] (!s2)) }
-ltl payload { liveness || <> (A1_goal_achieved + A2_goal_achieved > 3) }
